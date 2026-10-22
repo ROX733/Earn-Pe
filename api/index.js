@@ -7,18 +7,18 @@ const TelegramBot = require("node-telegram-bot-api");
 // ==================================================
 // CONFIG — hardcoded
 // ==================================================
-const BOT_TOKEN = "8833680848:AAFmBnuT8AB7YokAQsjSI7frui7U0TUYrpk";
-const BOT_USERNAME = "CashRichesBot";
+const BOT_TOKEN = "8434614447:AAE2uUw_v5xHsHpPHcMhqYJwjZdb43dVk6k";
+const BOT_USERNAME = "@EarnPeMiniApp_Bot";
 const MONGO_URI = "mongodb+srv://onlydatabase14_db_user:fOTYbj5lwDoUEHcu@cluster0.8jzothz.mongodb.net/?appName=Cluster0"; // ⚠️ TUM APNA NAYA MONGO URI YAHAN DAALO — abhi purana wala hai
-const ADMIN_PASSWORD = "DevloperRavi"; // Main Admin Panel ka password — chaho to badal do
-const DEV_VERIFY_PASSWORD = "DevRaviPanel"; // Device Verification Panel ka ALAG password — chaho to badal do
+const ADMIN_PASSWORD = "ROX"; // Main Admin Panel ka password — chaho to badal do
+const DEV_VERIFY_PASSWORD = "ROXHUREEE"; // Device Verification Panel ka ALAG password — chaho to badal do
 const RAVIPANEL_PASSWORD = ADMIN_PASSWORD; // /ravipanel bot command isi Admin Password se open hoga
-const ADMIN_TELEGRAM_IDS = ["6970779071"]; // ⚠️ FIX: pehle ye ek plain string thi (bina [ ]) — isi wajah se new-user notification character-by-character bhejne ki koshish kar raha tha aur fail ho raha tha. Ab sahi array hai — aur ID add karni ho to comma se yahan daal dena.
+const ADMIN_TELEGRAM_IDS = ["6"]; // ⚠️ FIX: pehle ye ek plain string thi (bina [ ]) — isi wajah se new-user notification character-by-character bhejne ki koshish kar raha tha aur fail ho raha tha. Ab sahi array hai — aur ID add karni ho to comma se yahan daal dena.
 const APP_URL = "https://cash-rich.vercel.app"; // ⚠️ pehli baar deploy karne ke baad apne asli Vercel URL se replace karo
-const APP_NAME = "🤑💸 Cash Rich";
-const POWERED_BY_HANDLE = "@MAKERBOTRAVIII";
-const POWERED_BY_LINK_TEXT = "RAVI MAKER PRO";
-const POWERED_BY_LINK_URL = "https://t.me/ravimakerprobot";
+const APP_NAME = "Earn Pe";
+const POWERED_BY_HANDLE = "@ROXXOP";
+const POWERED_BY_LINK_TEXT = "ROLEX";
+const POWERED_BY_LINK_URL = "https://t.me/rolexMaker_Bot";
 
 const PORT = process.env.PORT || 3000;
 
