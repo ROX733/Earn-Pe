@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Device Verification Panel</title>
+<style>
+  :root{
+    --accent:#7c6fff; --green:#22c55e; --red:#ef4444; --gold:#f59e0b; --bg:#0b0a14; --bg2:#12111f;
+    --card:#171526; --border:rgba(255,255,255,.08); --text:#f2f1f7; --muted:#8e8aa3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(circle at 50% -10%, var(--bg2), var(--bg) 70%); color:var(--text); min-height:100vh;
+  }
+  .topbar{padding:16px 22px; background:linear-gradient(90deg,#1e1b4b,#4f46e5); font-weight:800; font-size:16px; color:#fff;}
+  .wrap{max-width:480px; margin:0 auto; padding:24px;}
+  .login-box{max-width:340px; margin:80px auto; background:var(--card); padding:26px; border-radius:16px; border:1px solid var(--border);}
+  .login-box h3{margin-top:0;}
+  .card{background:var(--card); border-radius:16px; padding:22px; border:1px solid var(--border); margin-bottom:18px;}
+  .card h4{margin:0 0 14px; font-size:14px; text-transform:uppercase; letter-spacing:.6px; color:var(--accent);}
+  label{font-size:11.5px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); display:block; margin-top:14px; font-weight:700;}
+  input, select{width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:#1e1c30; color:var(--text); font-size:14.5px; margin-top:6px;}
+  button{cursor:pointer; border:none; border-radius:10px; padding:12px 16px; font-weight:700; font-size:14px;}
+  .btn-primary{background:var(--accent); color:#fff; width:100%; margin-top:18px;}
+  .msg{font-size:12.5px; margin-top:10px;}
+  .msg.ok{color:var(--green);} .msg.err{color:var(--red);}
+  .example-box{background:#1e1c30; border-radius:12px; padding:14px; font-size:12.5px; color:var(--muted); line-height:1.6; margin-top:16px;}
+  .example-box b{color:var(--text);}
+</style>
+</head>
+<body>
+
+<div class="topbar">🔐 Device Verification Panel</div>
+
+<div id="loginScreen" class="login-box">
+  <h3>Panel Login</h3>
+  <label>Password</label>
+  <input type="password" id="pwInput" placeholder="Enter panel password" />
+  <button class="btn-primary" onclick="login()">Login</button>
+  <div class="msg err" id="loginMsg"></div>
+</div>
+
+<div id="panel" class="wrap" style="display:none;">
+
+  <div class="card">
+    <h4>🎲 Random Fail Rate</h4>
+    <label>Device Verification Fail % (0–100)</label>
+    <input type="number" id="failPercent" min="0" max="100" placeholder="e.g. 30" />
+
+    <label>On Failure, Do This</label>
+    <select id="failAction">
+      <option value="ban">⛔ Ban from Bot</option>
+      <option value="no_refer_bonus">🚫 Only Refer Bonus Not Received (app still opens)</option>
+    </select>
+
+    <button class="btn-primary" onclick="saveSettings()">Save</button>
+    <div class="msg" id="saveMsg"></div>
+
+    <div class="example-box">
+      Example: agar <b>30%</b> set hai, to har 10 verifying users me se lagbhag <b>3</b> is random check me "fail" honge —
+      chahe unka device genuinely theek ho. Ye sirf ek admin-controlled probability hai, real fraud detection ke upar ek extra layer hai.<br/><br/>
+      <b>Ban</b> mode: fail hone pe user bot se poori tarah block ho jayega.<br/>
+      <b>Only Refer Bonus Not Received</b> mode: user Mini App normally use kar payega, lekin agar kisi ne use refer kiya tha, us referrer ko bonus <b>nahi</b> milega is particular referral ke liye.
+    </div>
+  </div>
+
+</div>
+
+<script>
+let panelPassword = "";
+
+function login() {
+  panelPassword = document.getElementById("pwInput").value;
+  fetch("/api/devverify/settings", { headers: { "x-admin-password": panelPassword } })
+    .then(r => { if (!r.ok) throw new Error("Wrong password"); return r.json(); })
+    .then(data => {
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("panel").style.display = "block";
+      document.getElementById("failPercent").value = data.deviceVerificationFailPercent || 0;
+      document.getElementById("failAction").value = data.deviceVerificationFailAction || "no_refer_bonus";
+    })
+    .catch(() => { document.getElementById("loginMsg").textContent = "❌ Incorrect password"; });
+}
+
+async function saveSettings() {
+  const failPercent = document.getElementById("failPercent").value;
+  const failAction = document.getElementById("failAction").value;
+  const msgEl = document.getElementById("saveMsg");
+
+  const res = await fetch("/api/devverify/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-admin-password": panelPassword },
+    body: JSON.stringify({ failPercent, failAction }),
+  });
+
+  if (res.ok) {
+    msgEl.textContent = "✅ Saved"; msgEl.className = "msg ok";
+  } else {
+    msgEl.textContent = "❌ Failed"; msgEl.className = "msg err";
+  }
+}
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
