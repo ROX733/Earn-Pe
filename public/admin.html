@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Admin - Cash Rich</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#ffffff; --bg2:#fff8ea;
+    --gold:#f59e0b; --gold2:#fbbf24;
+    --purple:#7c3aed; --purple2:#a855f7;
+    --green:#16a34a; --green2:#22c55e;
+    --yellow:#eab308; --red:#ef4444;
+    --card:#ffffff; --card2:#fffaf0;
+    --border:rgba(15,23,42,.08);
+    --text:#181322; --muted:#78748c;
+    --shadow:0 10px 26px -12px rgba(15,23,42,.12);
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(circle at 10% -6%, rgba(245,158,11,.12), transparent 40%),
+      radial-gradient(circle at 92% 10%, rgba(124,58,237,.10), transparent 42%),
+      var(--bg);
+    color:var(--text); min-height:100vh; padding-bottom:40px;
+    animation:bodyFade .5s var(--ease) both;
+  }
+  @keyframes bodyFade{ from{opacity:0} to{opacity:1} }
+  .hidden{ display:none !important; }
+  .wrap{ max-width:560px; margin:0 auto; padding:0 16px; }
+  button{ transition:transform .16s var(--ease), box-shadow .16s var(--ease), opacity .16s var(--ease); }
+  button:active{ transform:scale(.96); }
+
+  /* Gate */
+  .gate{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .gate-card{ width:100%; max-width:340px; text-align:center; animation:fadeUp .5s var(--ease) both; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:translateY(0)} }
+  .gate-card h1{ font-size:20px; font-weight:800; margin-bottom:18px;
+    background:linear-gradient(135deg,var(--gold),var(--green)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .gate-card input{
+    width:100%; padding:14px; border-radius:13px; border:1px solid var(--border); background:var(--bg2);
+    color:var(--text); font-size:15px; outline:none; text-align:center; margin-bottom:12px;
+    transition:border-color .16s var(--ease), background .16s var(--ease);
+  }
+  .gate-card input:focus{ border-color:var(--gold); background:#fff; }
+  .gate-card button{
+    width:100%; padding:14px; border:none; border-radius:13px; font-weight:800; font-size:15px; cursor:pointer;
+    background:linear-gradient(135deg,var(--purple2),var(--purple)); color:#fff;
+    box-shadow:0 10px 22px -8px rgba(124,58,237,.5);
+  }
+  .gate-err{ color:var(--red); font-size:12.5px; margin-top:10px; min-height:14px; }
+
+  /* Header + Tabs */
+  .header{ padding:18px 0 10px; font-size:20px; font-weight:800; animation:fadeDown .5s var(--ease) both; }
+  @keyframes fadeDown{ from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)} }
+  .tabs{ display:flex; gap:6px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    flex-shrink:0; padding:9px 14px; border-radius:11px; background:var(--card); border:1px solid var(--border);
+    color:var(--muted); font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+    box-shadow:var(--shadow); transition:color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease);
+  }
+  .tab.active{ background:linear-gradient(135deg,var(--gold2),var(--gold)); color:#fff; border-color:transparent; box-shadow:0 8px 18px -6px rgba(245,158,11,.5); }
+
+  .panel{ display:none; padding-top:6px; }
+  .panel.active{ display:block; animation:panelIn .35s var(--ease) both; }
+  @keyframes panelIn{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)} }
+
+  .card{ background:linear-gradient(155deg,var(--card),var(--card2)); border:1px solid var(--border); border-radius:17px; padding:16px; margin-bottom:14px; box-shadow:var(--shadow); }
+  .card h3{ margin:0 0 12px; font-size:14px; font-weight:800; }
+  .card .sub{ font-size:11.5px; color:var(--muted); margin:-8px 0 12px; line-height:1.5; }
+
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px; }
+  .field input, .field select{
+    width:100%; padding:11px 13px; border-radius:11px; border:1px solid var(--border); background:var(--bg2);
+    color:var(--text); font-size:13.5px; outline:none; transition:border-color .16s var(--ease), background .16s var(--ease);
+  }
+  .field input:focus, .field select:focus{ border-color:var(--gold); background:#fff; }
+  .row2{ display:flex; gap:10px; }
+  .row2 .field{ flex:1; }
+
+  .btn{
+    padding:11px 18px; border:none; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; color:#fff;
+    background:linear-gradient(135deg,var(--purple2),var(--purple)); box-shadow:0 8px 18px -6px rgba(124,58,237,.4);
+  }
+  .btn.green{ background:linear-gradient(135deg,var(--green2),var(--green)); box-shadow:0 8px 18px -6px rgba(34,197,94,.4); }
+  .btn.red{ background:linear-gradient(135deg,#f87171,var(--red)); box-shadow:0 8px 18px -6px rgba(239,68,68,.35); }
+  .btn.gold{ background:linear-gradient(135deg,var(--gold2),var(--gold)); box-shadow:0 8px 18px -6px rgba(245,158,11,.4); }
+  .btn.outline{ background:#fff; color:var(--text); border:1px solid var(--border); box-shadow:none; }
+  .btn.full{ width:100%; }
+  .btn.sm{ padding:8px 12px; font-size:12px; }
+
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+  .toggle-row:last-child{ border-bottom:none; }
+  .toggle-row span{ font-size:13px; font-weight:600; }
+  .switch{ position:relative; width:44px; height:24px; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider{ position:absolute; inset:0; background:#e5e0f0; border-radius:24px; cursor:pointer; transition:.2s var(--ease); }
+  .slider::before{ content:""; position:absolute; width:18px; height:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s var(--ease); box-shadow:0 2px 6px rgba(0,0,0,.2); }
+  input:checked + .slider{ background:linear-gradient(135deg,var(--green2),var(--green)); }
+  input:checked + .slider::before{ transform:translateX(20px); }
+
+  .list-item{
+    display:flex; align-items:center; justify-content:space-between; padding:12px 13px; gap:10px;
+    background:var(--bg2); border:1px solid var(--border); border-radius:13px; margin-top:8px; font-size:12.5px;
+    transition:transform .16s var(--ease); flex-wrap:wrap;
+  }
+  .list-item .meta{ color:var(--muted); font-size:11px; }
+  .list-item .actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stat-box{ background:var(--bg2); border:1px solid var(--border); border-radius:13px; padding:14px; text-align:center; }
+  .stat-box .v{ font-size:20px; font-weight:800; color:var(--gold); }
+  .stat-box .l{ font-size:11px; color:var(--muted); margin-top:2px; }
+
+  .json-output{
+    margin-top:12px; padding:14px; border-radius:12px; background:#181322; color:#e8e3f5;
+    font-family:'SF Mono', Consolas, monospace; font-size:11.5px; line-height:1.6; overflow-x:auto;
+    white-space:pre-wrap; word-break:break-word;
+  }
+
+  textarea{
+    width:100%; min-height:90px; padding:11px 13px; border-radius:11px; border:1px solid var(--border);
+    background:var(--bg2); color:var(--text); font-size:13.5px; outline:none; resize:vertical; font-family:inherit;
+    transition:border-color .16s var(--ease), background .16s var(--ease);
+  }
+  textarea:focus{ border-color:var(--gold); background:#fff; }
+
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); z-index:60;
+    background:#181322; border:1px solid var(--border); color:#fff; font-size:13px; font-weight:600;
+    padding:12px 18px; border-radius:13px; opacity:0; pointer-events:none; transition:opacity .25s var(--ease), transform .25s var(--ease);
+    max-width:88%; text-align:center; box-shadow:0 12px 28px -10px rgba(15,23,42,.4);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+
+</head>
+<body>
+
+<!-- ================= PASSWORD GATE ================= -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <h1>Admin Panel Access</h1>
+    <input type="password" id="gatePass" placeholder="Enter admin password" />
+    <button id="gateBtn">Unlock</button>
+    <div class="gate-err" id="gateErr"></div>
+  </div>
+</div>
+
+<!-- ================= MAIN PANEL ================= -->
+<div class="wrap hidden" id="mainPanel">
+  <div class="header">Cash Rich — Admin</div>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="channels">Channels</button>
+    <button class="tab" data-tab="verification">Verification</button>
+    <button class="tab" data-tab="bonus">Bonuses</button>
+    <button class="tab" data-tab="leaderboard">Leaderboard</button>
+    <button class="tab" data-tab="withdraw">Withdrawals</button>
+    <button class="tab" data-tab="giftcodes">Gift Codes</button>
+    <button class="tab" data-tab="users">Users</button>
+    <button class="tab" data-tab="broadcast">Broadcast</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="panel active" id="panel-overview">
+    <div class="card">
+      <h3>Stats</h3>
+      <div class="stat-grid" id="statsGrid"></div>
+    </div>
+    <div class="card">
+      <div class="toggle-row">
+        <span>Bot Enabled</span>
+        <label class="switch"><input type="checkbox" id="botToggle" /><span class="slider"></span></label>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Payout Channel</h3>
+      <div class="field"><label>Channel ID</label><input id="payoutChatId" placeholder="@channel or -100..." /></div>
+      <div class="field"><label>Name</label><input id="payoutName" placeholder="Channel name" /></div>
+      <button class="btn full" id="savePayoutBtn">Save Payout Channel</button>
+    </div>
+    <div class="card">
+      <h3>Danger Zone</h3>
+      <div class="sub">This sets EVERY user's balance to ₹0. Cannot be undone.</div>
+      <button class="btn full red" id="resetBalanceBtn">Reset All Balances</button>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div class="panel" id="panel-channels">
+    <div class="card">
+      <h3>Add Force-Join Channel</h3>
+      <div class="field"><label>Name</label><input id="chName" placeholder="Channel name" /></div>
+      <div class="field"><label>Chat ID</label><input id="chChatId" placeholder="@channel or -100..." /></div>
+      <div class="field"><label>URL</label><input id="chUrl" placeholder="https://t.me/..." /></div>
+      <div class="toggle-row"><span>Forced (must join)</span><label class="switch"><input type="checkbox" id="chForced" checked /><span class="slider"></span></label></div>
+      <button class="btn full" id="addChannelBtn">Add Channel</button>
+    </div>
+    <div class="card">
+      <h3>Existing Channels</h3>
+      <div id="channelsList"></div>
+    </div>
+    <div class="card">
+      <h3>Channel Join Stats</h3>
+      <div class="sub">Cumulative join count per channel — never decreases if someone leaves later. Includes join requests for private/request-based channels.</div>
+      <button class="btn full gold" id="loadChannelStatsBtn">Load Stats</button>
+      <pre id="channelStatsOutput" class="json-output hidden"></pre>
+    </div>
+    <div class="card">
+      <h3>Bot Admin Check</h3>
+      <div class="sub">Scans every added channel/group/private chat and checks if the bot is still admin there. If not, it also messages the bot admin(s) directly.</div>
+      <button class="btn full" id="checkBotAdminBtn">Run Check</button>
+      <div id="botAdminResult" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- VERIFICATION -->
+  <div class="panel" id="panel-verification">
+    <div class="card">
+      <h3>Verification Mode</h3>
+      <div class="field">
+        <label>Mode</label>
+        <select id="verifMode">
+          <option value="enabled">Device Verification (verify.html)</option>
+          <option value="captcha">Captcha (captcha.html)</option>
+          <option value="disabled">Disabled</option>
+        </select>
+      </div>
+      <button class="btn full" id="saveVerifModeBtn">Save Mode</button>
+    </div>
+    <div class="card">
+      <h3>On Verification Fail</h3>
+      <div class="field">
+        <label>Action</label>
+        <select id="failAction">
+          <option value="ban">Ban the user</option>
+          <option value="no_refer_bonus">Referrer does not get bonus</option>
+        </select>
+      </div>
+      <div class="field"><label>Random Fail % (device check)</label><input type="number" id="failPercent" placeholder="0" /></div>
+      <div class="gate-err" style="color:var(--muted); font-size:11.5px;">This uses the same password as the main admin panel.</div>
+      <button class="btn full" id="saveFailBtn">Save</button>
+    </div>
+    <div class="card">
+      <h3>Captcha Settings</h3>
+      <div class="field"><label>Time (seconds)</label><input type="number" id="captchaTime" placeholder="15" /></div>
+      <button class="btn full" id="saveCaptchaBtn">Save</button>
+    </div>
+  </div>
+
+  <!-- BONUSES -->
+  <div class="panel" id="panel-bonus">
+    <div class="card">
+      <h3>Daily Check-in / Claim Bonus Amount</h3>
+      <div class="toggle-row"><span>Daily Check-in Enabled</span><label class="switch"><input type="checkbox" id="checkinToggle" /><span class="slider"></span></label></div>
+      <div class="field"><label>Amount (₹) — also used as Claim Bonus amount</label><input type="number" id="checkinAmount" placeholder="2" /></div>
+      <button class="btn full" id="saveCheckinBtn">Save</button>
+    </div>
+    <div class="card">
+      <h3>Referral Reward</h3>
+      <div class="field">
+        <label>Mode</label>
+        <select id="referMode"><option value="amount">Fixed Amount</option><option value="chance">Spin Chance</option></select>
+      </div>
+      <div class="field"><label>Amount (₹, if mode = amount)</label><input type="number" id="referAmount" placeholder="5" /></div>
+      <button class="btn full" id="saveReferBtn">Save</button>
+    </div>
+    <div class="card">
+      <h3>Spin Wheel Segments</h3>
+      <div class="field"><label>Amounts (comma separated)</label><input id="spinSegments" placeholder="5,10,20,30,50,100,150,200" /></div>
+      <button class="btn full" id="saveSpinBtn">Save</button>
+    </div>
+    <div class="card">
+      <h3>Scratch Card</h3>
+      <div class="sub">Only works when Referral Reward mode above is set to "Fixed Amount". Example: 3 refers per card, min ₹0.5, max ₹2 — every 3rd referral, the user gets a scratch card worth ₹0.5–₹2.</div>
+      <div class="field"><label>Refers needed per scratch card (0 = off)</label><input type="number" id="scReferThreshold" placeholder="3" /></div>
+      <div class="row2">
+        <div class="field"><label>Min Reward ₹</label><input type="number" id="scMinReward" placeholder="0.5" step="0.1" /></div>
+        <div class="field"><label>Max Reward ₹</label><input type="number" id="scMaxReward" placeholder="2" step="0.1" /></div>
+      </div>
+      <button class="btn full gold" id="saveScratchBtn">Save Scratch Card Settings</button>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="panel" id="panel-leaderboard">
+    <div class="card">
+      <h3>Leaderboard Settings</h3>
+      <div class="field"><label>How many users show on leaderboard</label><input type="number" id="lbDisplayCount" placeholder="20" /></div>
+      <div class="field"><label>How many of them get a reward</label><input type="number" id="lbRewardCount" placeholder="5" /></div>
+      <div class="field"><label>Reward amounts (comma separated, Top-1 first)</label><input id="lbRewards" placeholder="20,15,10,5,2" /></div>
+      <div class="field"><label>Prize Organized By (username, without @)</label><input id="lbPrizeBy" placeholder="username" /></div>
+      <div class="field"><label>Sponsor (optional)</label><input id="lbSponsor" placeholder="Sponsor name" /></div>
+      <button class="btn full" id="saveLbBtn">Save Leaderboard Settings</button>
+    </div>
+  </div>
+
+  <!-- WITHDRAWALS -->
+  <div class="panel" id="panel-withdraw">
+    <div class="card">
+      <h3>Wallet Withdrawal</h3>
+      <div class="toggle-row"><span>Enabled</span><label class="switch"><input type="checkbox" id="wEnabled" /><span class="slider"></span></label></div>
+      <div class="row2">
+        <div class="field"><label>Min ₹</label><input type="number" id="wMin" /></div>
+        <div class="field"><label>Max ₹</label><input type="number" id="wMax" /></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Tax %</label><input type="number" id="wTax" /></div>
+        <div class="field"><label>Cooldown (min)</label><input type="number" id="wCooldown" /></div>
+      </div>
+      <button class="btn full" id="saveWalletBtn">Save</button>
+    </div>
+    <div class="card">
+      <h3>Add Gateway</h3>
+      <div class="field"><label>Gateway Name</label><input id="gwName" placeholder="e.g. PhonePe" /></div>
+      <div class="field"><label>API URL (use {wallet} and {amount})</label><input id="gwUrl" placeholder="https://api.example.com/pay?to={wallet}&amt={amount}" /></div>
+      <button class="btn full" id="addGwBtn">Add Gateway</button>
+    </div>
+    <div class="card">
+      <h3>Existing Gateways</h3>
+      <div id="gatewaysList"></div>
+    </div>
+    <div class="card">
+      <h3>Daily Withdrawal Limit</h3>
+      <div class="field"><label>Withdrawals per day (per user)</label><input type="number" id="wPerDay" /></div>
+      <button class="btn full" id="saveWPerDayBtn">Save</button>
+    </div>
+    <div class="card">
+      <h3>Withdrawal Eligibility</h3>
+      <div class="sub">Controls who is allowed to withdraw at all, separate from the per-gateway min/max above.</div>
+      <div class="field"><label>Referrals needed for first withdrawal (0 = no restriction)</label><input type="number" id="minReferWithdraw" placeholder="0" /></div>
+      <div class="field"><label>Max withdrawal amount overall (₹)</label><input type="number" id="maxWithdrawAmt" placeholder="500" /></div>
+      <button class="btn full gold" id="saveEligibilityBtn">Save Eligibility Settings</button>
+    </div>
+  </div>
+
+  <!-- GIFT CODES -->
+  <div class="panel" id="panel-giftcodes">
+    <div class="card">
+      <h3>Create Gift Code</h3>
+      <div class="row2">
+        <div class="field"><label>Max Claims</label><input type="number" id="gcMax" /></div>
+        <div class="field"><label>Amount per user ₹</label><input type="number" id="gcAmount" /></div>
+      </div>
+      <button class="btn full" id="createGcBtn">Create Code</button>
+    </div>
+    <div class="card">
+      <h3>Existing Codes</h3>
+      <div id="giftcodesList"></div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="panel" id="panel-users">
+    <div class="card">
+      <h3>Balance Add / Deduct</h3>
+      <div class="field"><label>Telegram ID</label><input id="balUserId" /></div>
+      <div class="field"><label>Amount ₹</label><input type="number" id="balAmount" /></div>
+      <div class="row2">
+        <button class="btn green full" id="balAddBtn">Add</button>
+        <button class="btn red full" id="balDeductBtn">Deduct</button>
+      </div>
+    </div>
+    <div class="card">
+      <h
