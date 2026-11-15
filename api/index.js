@@ -736,6 +736,7 @@ async function editToPostVerifyButton(chatId, messageId, telegramId, user) {
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.use(async (req, res, next) => {
@@ -831,7 +832,7 @@ async function handleRavipanelPasswordAttempt(msg) {
   await bot.sendMessage(chatId, `✅ *Access Granted*`, {
     parse_mode: "Markdown",
     reply_markup: {
-      inline_keyboard: [[{ text: "🛠️ Open Admin Panel", web_app: { url: `${APP_URL}/admin.html?pass=${RAVIPANEL_PASSWORD}` } }]],
+      inline_keyboard: [[{ text: "🛠️ Open Admin Panel", web_app: { url: `${APP_URL}/admin.html` } }]],
     },
   });
 }
@@ -2262,10 +2263,14 @@ app.get("/api", (req, res) => res.send(`⚡ ${APP_NAME} backend is running.`));
 
 // ---------- LOCAL DEV ----------
 if (require.main === module) {
-  connectDB().then(() => {
-    bot.startPolling();
-    app.listen(PORT, () => console.log(`🚀 Local server running on port ${PORT}`));
-  });
+  // Render runs a persistent HTTP web service. Telegram updates arrive via webhook.
+  // Polling and webhooks must not be enabled together.
+  app.listen(PORT, "0.0.0.0", () => console.log(`Earn Pe listening on port ${PORT}`));
+  connectDB().catch(err => console.error("Initial database connection failed:", err.message));
+  if (process.env.BOT_MODE === "polling") {
+    console.warn("BOT_MODE=polling: disable Telegram webhook before using this local-only mode");
+    bot.startPolling().catch(err => console.error("Telegram polling failed:", err.message));
+  }
 }
 
 module.exports = app;
