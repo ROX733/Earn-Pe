@@ -738,6 +738,27 @@ app.use(cors());
 app.use(express.json());
 app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
 app.use(express.static(path.join(__dirname, "../public")));
+// Temporary safe-mode guard: no reward credits, payouts or balance-changing
+// actions until Telegram initData authentication and atomic accounting land.
+// Keep this guard before the database middleware and all API routes.
+const SAFE_MODE = process.env.SAFE_MODE !== "false";
+const safeModeBlockedRoutes = new Set([
+  "/api/verify", "/api/captcha/submit", "/api/captcha/fallback-check",
+  "/api/checkin", "/api/claim-bonus", "/api/spin/wheel",
+  "/api/giftcode/claim", "/api/scratchcard/claim",
+  "/api/withdraw", "/api/withdraw/upi", "/api/giftcard/redeem",
+  "/api/admin/balance/add", "/api/admin/balance/deduct",
+  "/api/admin/reset-all-balance", "/api/admin/upi/approve",
+  "/api/admin/upi/reject"
+]);
+app.use((req, res, next) => {
+  if (SAFE_MODE && req.method === "POST" && safeModeBlockedRoutes.has(req.path)) {
+    return res.status(503).json({ error: "Rewards and payouts are temporarily disabled for safety", safeMode: true });
+  }
+  next();
+});
+app.get("/api/safe-mode", (_req, res) => res.json({ safeMode: SAFE_MODE, rewardsEnabled: !SAFE_MODE, payoutsEnabled: !SAFE_MODE }));
+
 
 app.use(async (req, res, next) => {
   try {
