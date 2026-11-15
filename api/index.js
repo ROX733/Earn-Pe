@@ -5,16 +5,10 @@ const mongoose = require("mongoose");
 const TelegramBot = require("node-telegram-bot-api");
 
 // ==================================================
-// CONFIG — hardcoded
+// CONFIG — environment variables (see .env.example)
 // ==================================================
-const BOT_TOKEN = "8434614447:AAE2uUw_v5xHsHpPHcMhqYJwjZdb43dVk6k";
-const BOT_USERNAME = "@EarnPeMiniApp_Bot";
-const MONGO_URI = "mongodb+srv://onlydatabase14_db_user:fOTYbj5lwDoUEHcu@cluster0.8jzothz.mongodb.net/?appName=Cluster0"; // ⚠️ TUM APNA NAYA MONGO URI YAHAN DAALO — abhi purana wala hai
-const ADMIN_PASSWORD = "ROX"; // Main Admin Panel ka password — chaho to badal do
-const DEV_VERIFY_PASSWORD = "ROXHUREEE"; // Device Verification Panel ka ALAG password — chaho to badal do
-const RAVIPANEL_PASSWORD = ADMIN_PASSWORD; // /ravipanel bot command isi Admin Password se open hoga
-const ADMIN_TELEGRAM_IDS = ["6"]; // ⚠️ FIX: pehle ye ek plain string thi (bina [ ]) — isi wajah se new-user notification character-by-character bhejne ki koshish kar raha tha aur fail ho raha tha. Ab sahi array hai — aur ID add karni ho to comma se yahan daal dena.
-const APP_URL = "https://cash-rich.vercel.app"; // ⚠️ pehli baar deploy karne ke baad apne asli Vercel URL se replace karo
+const { BOT_TOKEN, BOT_USERNAME, MONGO_URI, ADMIN_PASSWORD, DEV_VERIFY_PASSWORD, ADMIN_TELEGRAM_IDS, APP_URL, TELEGRAM_WEBHOOK_SECRET } = require("./config");
+const RAVIPANEL_PASSWORD = ADMIN_PASSWORD;
 const APP_NAME = "Earn Pe";
 const POWERED_BY_HANDLE = "@ROXXOP";
 const POWERED_BY_LINK_TEXT = "ROLEX";
@@ -750,12 +744,12 @@ app.use(async (req, res, next) => {
     next();
   } catch (err) {
     console.error("DB connection error:", err.message);
-    res.status(500).json({ error: "DB connection failed", detail: err.message });
+    res.status(503).json({ error: "Database temporarily unavailable" });
   }
 });
 
 function checkAdmin(req, res, next) {
-  const pass = req.headers["x-admin-password"] || req.body.adminPassword || req.query.adminPassword;
+  const pass = req.headers["x-admin-password"];
   if (pass !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
   next();
 }
@@ -842,7 +836,12 @@ async function handleRavipanelPasswordAttempt(msg) {
   });
 }
 
-app.post("/api/webhook", async (req, res) => {
+app.post("/api/webhook", (req, res, next) => {
+  if (req.headers["x-telegram-bot-api-secret-token"] !== TELEGRAM_WEBHOOK_SECRET) {
+    return res.sendStatus(403);
+  }
+  next();
+}, async (req, res) => {
   try {
     const update = req.body;
     const telegramId = update.message?.from?.id ? String(update.message.from.id) : null;
@@ -865,10 +864,11 @@ app.post("/api/webhook", async (req, res) => {
   }
 });
 
-app.get("/api/set-webhook", async (req, res) => {
+app.post("/api/admin/set-webhook", checkAdmin, async (req, res) => {
   try {
     const result = await bot.setWebHook(`${APP_URL}/api/webhook`, {
       allowed_updates: ["message", "callback_query", "chat_join_request"],
+      secret_token: TELEGRAM_WEBHOOK_SECRET,
     });
     res.json({ success: result, webhook: `${APP_URL}/api/webhook` });
   } catch (err) {
@@ -876,13 +876,13 @@ app.get("/api/set-webhook", async (req, res) => {
   }
 });
 
-app.get("/api/webhook-info", async (req, res) => {
+app.get("/api/admin/webhook-info", checkAdmin, async (req, res) => {
   try {
     const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`);
     const data = await response.json();
-    res.json(data);
+    res.json({ ok: data.ok, result: data.result ? { url: data.result.url, pending_update_count: data.result.pending_update_count, last_error_message: data.result.last_error_message } : undefined });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Could not fetch webhook status" });
   }
 });
 
